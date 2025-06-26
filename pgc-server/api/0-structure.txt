@@ -1,0 +1,14 @@
+
+/games/index
+    create game
+        post game_type
+
+    join game
+        post game_players
+
+/games/game_type
+start game
+    post seat assignments
+    post deck_cards
+    post hand_cards
+

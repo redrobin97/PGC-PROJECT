@@ -1,9 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
-const { JWT_SECRET = "jbdhbvchukeavbewuhvhled" } = process.env;
+const JWT_SECRET = process.env.JWT_SECRET || "jbdhbvchukeavbewuhvhled";
 const { getUserById } = require("../../db/querys/users");
-const { createNewGame } = require("../../db/querys/createNewGame");
+const { createNewGame, addPlayer } = require("../../db/querys/games");
 
 router.use("/twenty_one", require("./twenty_one"));
 // router.use(async (req, res, next) => {
@@ -35,14 +35,33 @@ router.use("/twenty_one", require("./twenty_one"));
 // });
 // router.use("/twentyOne", require("./twentyOne"));
 
-// /api/games
-router.get("/:game_type", (req, res) => {
+// api/games/join
+router.post("/join", (req, res) => {
+  async function joinGame() {
+    try {
+      const user = req.body.user;
+      const game = req.body.game;
+      const newPlayer = await addPlayer({ user, game });
+      console.log(newPlayer);
+      newPlayer
+        ? res.send({ message: "Player added successfully", newPlayer })
+        : res.send("error adding player");
+    } catch (err) {
+      throw err;
+    }
+  }
+  joinGame();
+});
+
+// /api/games/newGame/
+router.post("/newGame", (req, res) => {
   async function createGame() {
     try {
-      const gameType = req.params.game_type;
+      const gameType = req.body.game_type;
       const game = await createNewGame(gameType);
-      // console.log(game);
-      res.send(game);
+      game
+        ? res.send({ message: "game created successfully", game })
+        : res.send({ message: "error creating game" });
       return game;
     } catch (err) {
       throw err;
