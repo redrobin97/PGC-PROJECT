@@ -1,0 +1,44 @@
+db structure -
+
+users-
+id
+username
+password
+role
+
+games-
+id
+game_type
+game_complete ?
+
+
+cards
+id
+suit
+value
+name
+image_url
+
+game_players
+player_id
+game_id
+is_turn ?
+seat_number
+score
+result
+
+deck_cards
+game_id
+card_id
+position
+
+hand_cards
+game_id
+player_id
+card_id
+
+
+
+
+
+
