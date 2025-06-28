@@ -36,38 +36,43 @@ router.use("/twenty_one", require("./twenty_one"));
 // router.use("/twentyOne", require("./twentyOne"));
 
 // api/games/join
-router.post("/join", (req, res) => {
-  async function joinGame() {
-    try {
-      const user = req.body.user;
-      const game = req.body.game;
-      const newPlayer = await addPlayer({ user, game });
-      console.log(newPlayer);
-      newPlayer
-        ? res.send({ message: "Player added successfully", newPlayer })
-        : res.send("error adding player");
-    } catch (err) {
-      throw err;
+router.post("/join", async (req, res, next) => {
+  try {
+    const user = req.user;
+    const game = req.body.game;
+    const newPlayer = await addPlayer({ user, game });
+
+    if (newPlayer) {
+      return res.send({ message: "Player added successfully", newPlayer });
+    } else {
+      return res.status(400).send("error adding player");
     }
+  } catch (err) {
+    next({
+      name: "JoinGameError",
+      message: err.message,
+      status: 500,
+    });
   }
-  joinGame();
 });
 
 // /api/games/newGame/
-router.post("/newGame", (req, res) => {
-  async function createGame() {
-    try {
-      const gameType = req.body.game_type;
-      const game = await createNewGame(gameType);
-      game
-        ? res.send({ message: "game created successfully", game })
-        : res.send({ message: "error creating game" });
-      return game;
-    } catch (err) {
-      throw err;
+router.post("/newGame", async (req, res, next) => {
+  try {
+    const gameType = req.body.game_type;
+    const game = await createNewGame(gameType);
+    if (game) {
+      return res.send({ message: "game created successfully", game });
+    } else {
+      return res.send({ message: "error creating game" });
     }
+  } catch (err) {
+    next({
+      name: `NewGameError`,
+      message: err.message,
+      status: 500,
+    });
   }
-  createGame();
 });
 
 module.exports = router;
