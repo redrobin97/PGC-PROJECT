@@ -19,6 +19,20 @@ async function createNewGame(game_type) {
   }
 }
 
+//get game by id
+async function getGameById(id) {
+  try {
+    const { rows: game } = await client.query(
+      `
+      SELECT * FROM games WHERE id = $1`,
+      [id]
+    );
+    return game;
+  } catch (err) {
+    throw err;
+  }
+}
+
 //add player to game
 async function addPlayer({ user, game }) {
   try {
@@ -38,7 +52,7 @@ async function addPlayer({ user, game }) {
 }
 
 //assign player seats
-async function assignSeat({ user, seatNumber }) {
+async function assignSeat({ player, seat, game }) {
   try {
     const {
       rows: [assignedSeat],
@@ -47,8 +61,9 @@ async function assignSeat({ user, seatNumber }) {
         UPDATE game_players
         SET seat_number = $1
         WHERE player_id = $2
+          AND game_id = $3
         RETURNING *`,
-      [seatNumber, user.id]
+      [seat, player.id, game.id]
     );
     return assignedSeat;
   } catch (err) {
@@ -56,17 +71,36 @@ async function assignSeat({ user, seatNumber }) {
   }
 }
 
-//assign deck cards
-async function assignDeckCard({ game, card, position }) {
+//remove deck cards
+async function removeDeckCards({ game, card }) {
+  try {
+    const { rows: removedCard } = await client.query(
+      `
+      DELETE FROM deck_cards
+      WHERE game_id = $1
+      AND card_id = $2
+      RETURNING *
+      `,
+      [game.id, card.card_id]
+    );
+    return removedCard;
+  } catch (err) {
+    throw err;
+  }
+}
+
+//updateDeck positions
+async function updateDeckPosition({ game, card, position }) {
   try {
     const {
       rows: [deckCard],
     } = await client.query(
       `
-        INSERT INTO deck_cards(game_id, card_id, position)
-        VALUES($1, $2, $3)
+        UPDATE deck_cards
+        SET position = $1
+        WHERE game_id = $2 AND card_id = $3
         RETURNING *`,
-      [game.id, card.id, position]
+      [position, game.id, card.card_id]
     );
     return deckCard;
   } catch (err) {
@@ -75,16 +109,45 @@ async function assignDeckCard({ game, card, position }) {
 }
 
 //assign player hand
-async function assignHand({ game, user }) {
+async function assignHandCards({ game, player, card }) {
   try {
     const { rows: playerHand } = await client.query(
       `
-            INSERT INTO hand_cards(game_id, player_id)
-            VALUES($1, $2)
+            INSERT INTO hand_cards(game_id, player_id, card_id)
+            VALUES($1, $2, $3)
             RETURNING *`,
-      [game.id, user.id]
+      [game.id, player.id, card.card_id]
     );
     return playerHand;
+  } catch (err) {
+    throw err;
+  }
+}
+
+//intialize deck
+async function initDeck() {
+  try {
+    const { rows: deck } = await client.query(
+      `
+            SELECT * FROM cards
+      `
+    );
+    return deck;
+  } catch (err) {
+    throw err;
+  }
+}
+
+//get deck by ID
+async function getDeckbyId(id) {
+  try {
+    const { rows: deck } = await client.query(
+      `
+      SELECT * FROM deck_cards
+      WHERE game_id = 1;
+      `
+    );
+    return deck;
   } catch (err) {
     throw err;
   }
@@ -93,7 +156,11 @@ async function assignHand({ game, user }) {
 module.exports = {
   createNewGame,
   addPlayer,
-  assignDeckCard,
+  updateDeckPosition,
   assignSeat,
-  assignHand,
+  assignHandCards,
+  getGameById,
+  initDeck,
+  getDeckbyId,
+  removeDeckCards,
 };

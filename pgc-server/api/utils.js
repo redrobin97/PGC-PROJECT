@@ -1,9 +1,9 @@
 function requireUser(req, res, next) {
   if (!req.user) {
-    res.status(401);
-    next({
+    return next({
       name: "MissingUserError",
       message: "You must be logged in to perform this action",
+      status: 401,
     });
   }
   next();
@@ -11,10 +11,10 @@ function requireUser(req, res, next) {
 
 function requireAdmin(req, res, next) {
   if (req.user.role !== "admin") {
-    res.status(401);
-    next({
+    return next({
       name: "MissingSecurityClearance",
       message: "This function is reserved for Admin only",
+      status: 401,
     });
   }
   next();

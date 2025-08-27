@@ -95,7 +95,6 @@ async function createTables() {
               game_id INTEGER REFERENCES games(id) ON DELETE CASCADE,
               player_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
               card_id INTEGER REFERENCES cards(id) ON DELETE CASCADE,
-              position INTEGER,
               PRIMARY KEY (game_id, player_id, card_id))`);
   } catch (err) {
     throw err;

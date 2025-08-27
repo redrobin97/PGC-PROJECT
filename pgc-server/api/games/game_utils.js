@@ -1,34 +1,70 @@
 //utility functions for all games
-
 const {
-  assignDeckCard,
-  assignHand,
-  assignSeat,
+  getDeckbyId,
+  updateDeckPosition,
+  assignHandCards,
+  removeDeckCards,
 } = require("../../db/querys/games");
 
-//assign game seat
-async function seatAssignment({ user, seatNumber }) {
+function shuffle(cards) {
+  for (let i = 0; i < cards.length; i++) {
+    let temp = cards[i];
+    let random = Math.floor(Math.random() * cards.length);
+    cards[i] = cards[random];
+    cards[random] = temp;
+  }
+  return cards;
+}
+
+async function drawFromDeck({ player, game, numberToDraw }) {
   try {
-    const seat = await assignSeat({ user, seatNumber });
+    let oldDeck = await getDeckbyId(game.id);
+    let newCards = [];
+
+    //draw cards
+    for (let i = 0; i < numberToDraw; i++) {
+      newCards.push(oldDeck.find((card) => card.position == i));
+      oldDeck = oldDeck.filter((card) => card.position !== i);
+    }
+
+    //push new cards to hand & delete cards from deck
+    for (let i = 0; i < newCards.length; i++) {
+      const handResult = await assignHandCards({
+        game,
+        player,
+        card: newCards[i],
+      });
+      const removeResult = await removeDeckCards({ game, card: newCards[i] });
+      if (!handResult)
+        console.log(
+          "error at ASSIGNHANDPOSITIONS in f(DRAWFROMDECK) /api/games/game_utils"
+        );
+      if (!removeResult)
+        console.log(
+          "error at REMOVECARDSFROMDECK in f(DRAWFROMDECK) /api/games/game_utils"
+        );
+    }
+
+    //update deck card positions
+    oldDeck.forEach((card) => {
+      card.position -= numberToDraw;
+    });
+    for (let i = 0; i < oldDeck.length; i++) {
+      const result = await updateDeckPosition({
+        game,
+        card: oldDeck[i],
+        position: oldDeck[i].position,
+      });
+      if (!result)
+        console.log(
+          "error at UPDATECARDPOSITIONS in f(DRAWFROMDECK) /api/games/game_utils"
+        );
+    }
+
+    return newCards;
   } catch (err) {
     throw err;
   }
 }
 
-//assign hand
-async function handAssignment({ game, user }) {
-  try {
-    const seat = await assignHand({ game, user });
-  } catch (err) {
-    throw err;
-  }
-}
-
-//assign deck cards
-async function deckAssignment({ game, card, position }) {
-  try {
-    const seat = await assignDeckCard({ game, card, position });
-  } catch (err) {
-    throw err;
-  }
-}
+module.exports = { shuffle, drawFromDeck };
